@@ -1,11 +1,25 @@
 import sqlite3
 
-conn = sqlite3.connect('db/cnpj.db')
-cursor = conn.cursor()
-cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='table';")
-tables = cursor.fetchall()
+def menu():
+    print("Menu:")
+    print("1 - Search by Name")
+    print("2 - Search by CPF")
+    print("0 - Exit")
+    choice = input("Enter your choice (1/2/3): ")
+    return choice
 
-for table_name, table_sql in tables:
-    print(f"Table: {table_name}")
-    print(table_sql)
-    print("")
+def main():
+    conn_cnpj = sqlite3.connect('db/cnpj.db')
+    conn_cpf = sqlite3.connect('db/cpf.db')
+    cursor_cnpj = conn_cnpj.cursor()
+    cursor_cpf = conn_cpf.cursor()
+    choice = 0
+
+    while choice != '0' :
+        choice = menu()
+
+    conn_cnpj.close()
+    conn_cpf.close()
+
+if __name__ == "__main__":
+    main()
