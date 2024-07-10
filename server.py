@@ -19,9 +19,7 @@ def main():
 
     # starting server
     server.listen()
-    print(f"Server listening on {HOST}:{PORT}")
     conn, addr = server.accept()
-    print(f"Connected by {addr}")
     while True:
         data = conn.recv(1024)
         query = data.decode()
@@ -36,8 +34,12 @@ def main():
                 result = queries.search_cpf_by_cpf(query[:-2], cursor_cpf)
                 conn.sendall(result.encode())
         elif query[-1] == 'j':
-            result = queries.check_person_cnpj(query[:-2], cursor_cnpj)
-            conn.sendall(result.encode())
+            if query[-2] == 'n':
+                result = queries.check_person_cnpj(query[:-2], cursor_cnpj)
+                conn.sendall(result.encode())
+            elif query[-2] == 'x':
+                result = queries.check_person_cnpj_and_cpf(query[:-2], cursor_cnpj)
+                conn.sendall(result.encode())
         elif query[-1] == 'e':
             break
     server.close()

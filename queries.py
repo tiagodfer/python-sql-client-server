@@ -62,3 +62,21 @@ def check_person_cnpj(name, cursor):
         json_result.append(json_dict)
     json_result = json.dumps(json_result)
     return json_result
+
+def check_person_cnpj_and_cpf(name_and_cpf, cursor):
+    print(name_and_cpf)
+    name = name_and_cpf[:-6]
+    print(name)
+    cpf = name_and_cpf[-6:]
+    print(cpf)
+    cursor.execute("SELECT * FROM socios WHERE nome LIKE ? AND cpf_cnpj LIKE ?", (name, '%' + cpf + '%',))
+    result = cursor.fetchall()
+    json_result = []
+    for row in result:
+        json_dict = {
+            'cpf': row[3],
+            'nome': row[2],
+            }
+        json_result.append(json_dict)
+    json_result = json.dumps(json_result)
+    return json_result

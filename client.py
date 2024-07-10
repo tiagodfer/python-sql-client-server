@@ -6,7 +6,7 @@ def menu():
     print("1 - Search person in CPF database by name")
     print("2 - Search person in CPF database by exact name")
     print("3 - Search person in CPF database by CPF")
-    print("4 - Search person in CNPJ database by name)")
+    print("4 - Search person in CNPJ database by name")
     print("5 - Search person in CNPJ database by both name and CPF")
     print("0 - Exit")
     choice = input("Enter your choice: ")
@@ -50,8 +50,8 @@ def main():
             result = json.dumps(result, indent=4)
             print(result)
         elif choice == '4':
-            cpf = input("Enter Name: ")
-            message = cpf + "nj"
+            name = input("Enter name: ")
+            message = name + "nj"
             client.sendall(message.encode())
             data = client.recv(8192000)
             result = data.decode()
@@ -59,8 +59,9 @@ def main():
             result = json.dumps(result, indent=4)
             print(result)
         elif choice == '5':
-            cpf = input("Enter Name: ")
-            message = cpf + "nj"
+            name = input("Enter exact name: ")
+            cpf = input("Enter CPF: ")
+            message = name + cpf[-8:-2] + "xj"
             client.sendall(message.encode())
             data = client.recv(81920000)
             result = data.decode()
