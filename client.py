@@ -26,7 +26,7 @@ def main():
             name = input("Enter name: ")
             message = name + "nf"
             client.sendall(message.encode())
-            data = client.recv(8192)
+            data = client.recv(81920000)
             result = data.decode()
             result = json.loads(result)
             result = json.dumps(result, indent=4)
@@ -35,7 +35,7 @@ def main():
             name = input("Enter exact name: ")
             message = name + "xf"
             client.sendall(message.encode())
-            data = client.recv(8192)
+            data = client.recv(81920000)
             result = data.decode()
             result = json.loads(result)
             result = json.dumps(result, indent=4)
@@ -44,7 +44,7 @@ def main():
             cpf = input("Enter CPF: ")
             message = cpf + "cf"
             client.sendall(message.encode())
-            data = client.recv(8192)
+            data = client.recv(81920000)
             result = data.decode()
             result = json.loads(result)
             result = json.dumps(result, indent=4)
@@ -53,7 +53,7 @@ def main():
             name = input("Enter name: ")
             message = name + "nj"
             client.sendall(message.encode())
-            data = client.recv(8192000)
+            data = client.recv(81920000)
             result = data.decode()
             result = json.loads(result)
             result = json.dumps(result, indent=4)

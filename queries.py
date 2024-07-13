@@ -56,8 +56,6 @@ def check_person_cnpj(name, cursor):
             'nome': row[2],
             'sexo': row[6],
             'nasc': row[7],
-            'aaa': row[8],
-            'b': row[9]
             }
         json_result.append(json_dict)
     json_result = json.dumps(json_result)

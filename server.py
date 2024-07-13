@@ -7,25 +7,25 @@ import select
 import time
 
 def handle(conn, cursor_cpf, cursor_cnpj):
-            data = conn.recv(1024)
-            query = data.decode()
-            if query[-1] == 'f':
-                if query[-2] == 'n':
-                    result = queries.search_cpf_by_name(query[:-2], cursor_cpf)
-                    conn.sendall(result.encode())
-                elif query[-2] == 'x':
-                    result = queries.search_cpf_by_exact_name(query[:-2], cursor_cpf)
-                    conn.sendall(result.encode())
-                elif query[-2] == 'c':
-                    result = queries.search_cpf_by_cpf(query[:-2], cursor_cpf)
-                    conn.sendall(result.encode())
-            elif query[-1] == 'j':
-                if query[-2] == 'n':
-                    result = queries.check_person_cnpj(query[:-2], cursor_cnpj)
-                    conn.sendall(result.encode())
-                elif query[-2] == 'x':
-                    result = queries.check_person_cnpj_and_cpf(query[:-2], cursor_cnpj)
-                    conn.sendall(result.encode())
+    data = conn.recv(1024)
+    query = data.decode()
+    if query[-1] == 'f':
+        if query[-2] == 'n':
+            result = queries.search_cpf_by_name(query[:-2], cursor_cpf)
+            conn.sendall(result.encode())
+        elif query[-2] == 'x':
+            result = queries.search_cpf_by_exact_name(query[:-2], cursor_cpf)
+            conn.sendall(result.encode())
+        elif query[-2] == 'c':
+            result = queries.search_cpf_by_cpf(query[:-2], cursor_cpf)
+            conn.sendall(result.encode())
+    elif query[-1] == 'j':
+        if query[-2] == 'n':
+            result = queries.check_person_cnpj(query[:-2], cursor_cnpj)
+            conn.sendall(result.encode())
+        elif query[-2] == 'x':
+            result = queries.check_person_cnpj_and_cpf(query[:-2], cursor_cnpj)
+            conn.sendall(result.encode())
 
 def main():
     # SQL configuration
