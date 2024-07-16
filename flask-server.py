@@ -1,7 +1,16 @@
 from flask import Flask, jsonify
 import sqlite3
+from flask_cors import CORS, cross_origin
+
 
 app = Flask(__name__)
+CORS(app)  # This will enable CORS for all routes
+
+@app.route('/connectSuccess', methods=['POST'])
+@cross_origin()  # This enables CORS for this specific route
+def connect_success():
+    # Your route logic
+    return "Success message"
 
 @app.route("/get-person-by-name/<name>")
 def get_person_by_name(name):
