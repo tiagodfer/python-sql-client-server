@@ -28,8 +28,6 @@ def main():
             client.sendall(message.encode())
             data = client.recv(81920000)
             result = data.decode()
-            result = json.loads(result)
-            result = json.dumps(result, indent=4)
             print(result)
         elif choice == '2':
             name = input("Enter exact name: ")
@@ -37,8 +35,6 @@ def main():
             client.sendall(message.encode())
             data = client.recv(81920000)
             result = data.decode()
-            result = json.loads(result)
-            result = json.dumps(result, indent=4)
             print(result)
         elif choice == '3':
             cpf = input("Enter CPF: ")
@@ -46,8 +42,6 @@ def main():
             client.sendall(message.encode())
             data = client.recv(81920000)
             result = data.decode()
-            result = json.loads(result)
-            result = json.dumps(result, indent=4)
             print(result)
         elif choice == '4':
             name = input("Enter name: ")
@@ -55,8 +49,6 @@ def main():
             client.sendall(message.encode())
             data = client.recv(81920000)
             result = data.decode()
-            result = json.loads(result)
-            result = json.dumps(result, indent=4)
             print(result)
         elif choice == '5':
             name = input("Enter exact name: ")
@@ -65,8 +57,6 @@ def main():
             client.sendall(message.encode())
             data = client.recv(81920000)
             result = data.decode()
-            result = json.loads(result)
-            result = json.dumps(result, indent=4)
             print(result)
         elif choice == '0':
             break
