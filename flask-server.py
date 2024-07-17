@@ -13,6 +13,7 @@ def connect_success():
     return "Success message"
 
 @app.route("/get-person-by-name/<name>")
+@cross_origin()  # This enables CORS for this specific route
 def get_person_by_name(name):
     conn_cnpj = sqlite3.connect('db/cnpj.db')
     conn_cpf = sqlite3.connect('db/cpf.db')
@@ -35,6 +36,7 @@ def get_person_by_name(name):
         return jsonify({'error': 'Nome não encontrado'}), 404
 
 @app.route("/get-person-by-exact-name/<name>")
+@cross_origin()  # This enables CORS for this specific route
 def get_person_by_exact_name(name):
     conn_cnpj = sqlite3.connect('db/cnpj.db')
     conn_cpf = sqlite3.connect('db/cpf.db')
@@ -56,7 +58,8 @@ def get_person_by_exact_name(name):
     else:
         return jsonify({'error': 'Nome não encontrado'}), 404
 
-@app.route("/get-person-by-cpf/<cpf>")
+@app.route("/get-person-by-cpf/<cpf>", methods=['GET'])
+@cross_origin()  # This enables CORS for this specific route
 def get_person_by_cpf(cpf):
     conn_cnpj = sqlite3.connect('db/cnpj.db')
     conn_cpf = sqlite3.connect('db/cpf.db')
@@ -79,6 +82,7 @@ def get_person_by_cpf(cpf):
         return jsonify({'error': 'CPF não encontrado'}), 404
 
 @app.route("/get-person-cnpj-by-name/<name>")
+@cross_origin()  # This enables CORS for this specific route
 def get_person_cnpj_by_name(name):
     conn_cnpj = sqlite3.connect('db/cnpj.db')
     conn_cpf = sqlite3.connect('db/cpf.db')
@@ -99,6 +103,7 @@ def get_person_cnpj_by_name(name):
         return jsonify({'error': 'Nome não encontrado'}), 404
 
 @app.route("/get-person-cnpj-by-name-cpf/<name>-<cpf>")
+@cross_origin()  # This enables CORS for this specific route
 def get_person_cnpj_by_cpf(name, cpf):
     conn_cnpj = sqlite3.connect('db/cnpj.db')
     conn_cpf = sqlite3.connect('db/cpf.db')
