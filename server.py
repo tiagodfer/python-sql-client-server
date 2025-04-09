@@ -30,7 +30,7 @@ def handle(conn, cursor_cpf, cursor_cnpj):
 def main():
     # SQL configuration
     conn_cnpj = sqlite3.connect('db/cnpj.db')
-    conn_cpf = sqlite3.connect('db/cpf.db')
+    conn_cpf = sqlite3.connect('db/basecpf.db')
     cursor_cnpj = conn_cnpj.cursor()
     cursor_cpf = conn_cpf.cursor()
 
