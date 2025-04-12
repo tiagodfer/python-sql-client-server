@@ -160,4 +160,4 @@ def get_person_cnpj_by_cpf_radical(name, cpf):
         return jsonify({'error': 'Não é sócio de nenhuma empresa'}), 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
