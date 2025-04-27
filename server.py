@@ -121,6 +121,7 @@ class Window(QtWidgets.QWidget):
         # Fields
         self.host_input = QtWidgets.QLineEdit()
         self.host_input.setPlaceholderText("Host (e.g. 127.0.0.1)")
+        self.host_input.setText("127.0.0.1")
         self.port_input = QtWidgets.QLineEdit()
         self.port_input.setPlaceholderText("Port (e.g. 5050)")
 
