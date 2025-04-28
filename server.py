@@ -52,90 +52,13 @@ def main():
             handler = multiprocessing.Process(target=handle, args=(conn, cursor_cpf, cursor_cnpj,))
             handler.start()
             conn.close()
-            conn_cpf.close()
-            conn_cnpj.close()
-
-class Window(QtWidgets.QWidget):
-    def __init__(self, server):
-        super().__init__()
-        self.server = server
-        self.setWindowTitle("Python QT6 Server")
-        self.setFixedSize(500, 160)
-
-        # Buttons
-        self.cpf_db_button = QtWidgets.QPushButton("CPF DB")
-        self.cnpj_db_button = QtWidgets.QPushButton("CNPJ DB")
-        self.start_server_button = QtWidgets.QPushButton("Start Server")
-        self.stop_server_button = QtWidgets.QPushButton("Stop Server")
-        self.close_button = QtWidgets.QPushButton("Close")
-
-        # Fields
-        self.host_input = QtWidgets.QLineEdit()
-        self.host_input.setPlaceholderText("Host (e.g. 127.0.0.1)")
-        self.host_input.setText("127.0.0.1")
-        self.port_input = QtWidgets.QLineEdit()
-        self.port_input.setPlaceholderText("Port (e.g. 5050)")
-
-        # Layout
-        top_layout = QtWidgets.QHBoxLayout()
-        top_layout.addWidget(self.cpf_db_button)
-        top_layout.addWidget(self.cnpj_db_button)
-        top_layout.addWidget(self.host_input)
-        top_layout.addWidget(self.port_input)
-        top_layout.addWidget(self.start_server_button)
-        top_layout.addWidget(self.stop_server_button)
-
-        bottom_layout = QtWidgets.QHBoxLayout()
-        bottom_layout.addStretch()
-        bottom_layout.addWidget(self.close_button)
-        bottom_layout.addStretch()
-
-        main_layout = QtWidgets.QVBoxLayout()
-        main_layout.addLayout(top_layout)
-        main_layout.addLayout(bottom_layout)
-        self.setLayout(main_layout)
-
-        # State
-        self.cpf_db_path = None
-        self.cnpj_db_path = None
-
-        # Connect signals
-        self.cpf_db_button.clicked.connect(self.select_cpf_db)
-        self.cnpj_db_button.clicked.connect(self.select_cnpj_db)
-        self.start_server_button.clicked.connect(self.start_server_handler)
-        self.stop_server_button.clicked.connect(self.stop_server_handler)
-        self.close_button.clicked.connect(self.close)
-
-    def select_cpf_db(self):
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select CPF Database")
-        if path:
-            self.cpf_db_path = path
-            print(f"CPF DB Selected: {path}")
-
-    def select_cnpj_db(self):
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select CNPJ Database")
-        if path:
-            self.cnpj_db_path = path
-            print(f"CNPJ DB Selected: {path}")
-
-    def start_server_handler(self):
-        host = self.host_input.text().strip()
-        port = self.port_input.text().strip()
-        if not host or not port:
-            print("Host/Port cannot be empty!")
-            return
-        if not self.cpf_db_path or not self.cnpj_db_path:
-            print("Select both databases first!")
-            return
-        try:
-            port = int(port)
-        except ValueError:
-            print("Invalid port number")
-            return
-        self.server.start(host, port, self.cpf_db_path, self.cnpj_db_path)
-
-    def stop_server_handler(self):
-        self.server.stop()
+            last = time.time()
+        else:
+            if time.time() - last >= 60:
+                break
+    server.close()
+    conn_cnpj.close()
+    conn_cpf.close()
 
 if __name__ == "__main__":
     main()
