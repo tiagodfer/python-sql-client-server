@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 import server
+from multiprocessing import Manager
 
 class ServerThread(QtCore.QThread):
     def __init__(self, server):
@@ -17,6 +18,8 @@ class Window(QtWidgets.QWidget):
         self.cpf_db = None
         self.cnpj_db = None
         self.server = None
+        self.semaphore = None
+        self.manager = None
 
         # DB fields
         self.cpf_db_field = QtWidgets.QLineEdit()
@@ -117,12 +120,14 @@ class Window(QtWidgets.QWidget):
         except ValueError:
             self.error_label.setText("Invalid port number")
             return
+        self.manager = Manager()
+        self.semaphore = self.manager.BoundedSemaphore(threads)
         self.server = server.Server(
             host = "127.0.0.1",
             port = int(port),
             cpf_db = self.cpf_db,
             cnpj_db = self.cnpj_db,
-            threads = threads
+            semaphore = self.semaphore
         )
         self.server_thread = ServerThread(self.server)
         self.server_thread.start()
