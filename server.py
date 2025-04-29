@@ -53,6 +53,7 @@ class Server():
             print(result)
             Server.send_http_json(conn, {"results": result})
             print("[SERVER] Sent HTTP JSON response.")
+            semaphore.release()
             return
 
         # /get-person-by-exact-name/<name>
@@ -65,6 +66,7 @@ class Server():
             print(result)
             Server.send_http_json(conn, {"results": result})
             print("[SERVER] Sent HTTP JSON response.")
+            semaphore.release()
             return
 
         # /get-person-by-cpf/<cpf>
@@ -76,6 +78,7 @@ class Server():
             print(result)
             Server.send_http_json(conn, {"results": result})
             print("[SERVER] Sent HTTP JSON response.")
+            semaphore.release()
             return
 
         # none
@@ -90,7 +93,6 @@ class Server():
         conn.sendall(response.encode("utf-8"))
         print("[SERVER] Sent 400 Bad Request.")
         semaphore.release()
-        conn.close()
 
     def start(self):
         # server configuration
