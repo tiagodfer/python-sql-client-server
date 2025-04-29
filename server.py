@@ -3,62 +3,122 @@ import json
 import queries
 import socket
 import multiprocessing
+import re
 import select
-import time
+import urllib.parse
 
-def handle(conn, cursor_cpf, cursor_cnpj):
-    data = conn.recv(1024)
-    query = data.decode()
-    if query[-1] == 'f':
-        if query[-2] == 'n':
-            result = queries.search_cpf_by_name(query[:-2], cursor_cpf)
-            conn.sendall(result.encode())
-        elif query[-2] == 'x':
-            result = queries.search_cpf_by_exact_name(query[:-2], cursor_cpf)
-            conn.sendall(result.encode())
-        elif query[-2] == 'c':
-            result = queries.search_cpf_by_cpf(query[:-2], cursor_cpf)
-            conn.sendall(result.encode())
-    elif query[-1] == 'j':
-        if query[-2] == 'n':
-            result = queries.check_person_cnpj(query[:-2], cursor_cnpj)
-            conn.sendall(result.encode())
-        elif query[-2] == 'x':
-            result = queries.check_person_cnpj_and_cpf(query[:-2], cursor_cnpj)
-            conn.sendall(result.encode())
+class Server():
+    def __init__(self, host, port, cpf_db, cnpj_db, threads):
+        super().__init__()
+        self.host = host
+        self.port = port
+        self.cpf_db = cpf_db
+        self.cnpj_db = cnpj_db
+        self.server = None
+        self.running = False
+        self.semaphore = multiprocessing.BoundedSemaphore(threads)
 
-def main():
-    # SQL configuration
-    conn_cnpj = sqlite3.connect('db/cnpj.db')
-    conn_cpf = sqlite3.connect('db/basecpf.db')
-    cursor_cnpj = conn_cnpj.cursor()
-    cursor_cpf = conn_cpf.cursor()
+    @staticmethod
+    def send_http_json(conn, data):
+        body = json.dumps(data)
+        response = (
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            f"Content-Length: {len(body)}\r\n"
+            "\r\n"
+            f"{body}"
+        )
+        conn.sendall(response.encode("utf-8"))
+        print(response.encode("utf-8"))
 
-    # server configuration
-    HOST = socket.gethostbyname(socket.gethostname())
-    PORT = 5050
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.settimeout(60)
-    server.bind((HOST, PORT))
+    @staticmethod
+    def handle(conn, cpf_db, cnpj_db, semaphore):
+        # SQL configuration
+        conn_cpf = sqlite3.connect(cpf_db)
+        conn_cnpj = sqlite3.connect(cnpj_db)
+        cursor_cpf = conn_cpf.cursor()
+        cursor_cnpj = conn_cnpj.cursor()
 
-    # starting server
-    server.listen()
+        data = conn.recv(1024)
+        request = data.decode()
+        print(f"[SERVER] Received request: {request!r}")
 
-    last = time.time()
-    while True:
-        loop, _, _ = select.select([server], [], [], 60)
-        if loop:
-            conn, addr = server.accept()
-            handler = multiprocessing.Process(target=handle, args=(conn, cursor_cpf, cursor_cnpj,))
-            handler.start()
-            conn.close()
-            last = time.time()
-        else:
-            if time.time() - last >= 60:
-                break
-    server.close()
-    conn_cnpj.close()
-    conn_cpf.close()
+        # /get-person-by-name/<name>
+        match = re.match(r"GET /get-person-by-name/([^ ]+) HTTP/1.[01]", request)
+        if match:
+            name = match.group(1)
+            name = urllib.parse.unquote_plus(name)
+            print(f"[SERVER] Parsed name: {name}")
+            result = queries.search_cpf_by_name(name, cursor_cpf)
+            print(result)
+            Server.send_http_json(conn, {"results": result})
+            print("[SERVER] Sent HTTP JSON response.")
+            return
 
-if __name__ == "__main__":
-    main()
+        # /get-person-by-exact-name/<name>
+        match = re.match(r"GET /get-person-by-exact-name/([^ ]+) HTTP/1.[01]", request)
+        if match:
+            name = match.group(1)
+            name = urllib.parse.unquote_plus(name)
+            print(f"[SERVER] Parsed exact name: {name}")
+            result = queries.search_cpf_by_exact_name(name, cursor_cpf)
+            print(result)
+            Server.send_http_json(conn, {"results": result})
+            print("[SERVER] Sent HTTP JSON response.")
+            return
+
+        # /get-person-by-cpf/<cpf>
+        match = re.match(r"GET /get-person-by-cpf/(\d+) HTTP/1.[01]", request)
+        if match:
+            cpf = match.group(1)
+            print(f"[SERVER] Parsed CPF: {cpf}")
+            result = queries.search_cpf_by_cpf(cpf, cursor_cpf)
+            print(result)
+            Server.send_http_json(conn, {"results": result})
+            print("[SERVER] Sent HTTP JSON response.")
+            return
+
+        # none
+        error_body = json.dumps({"error": "Invalid request"})
+        response = (
+            "HTTP/1.1 400 Bad Request\r\n"
+            "Content-Type: application/json\r\n"
+            f"Content-Length: {len(error_body)}\r\n"
+            "\r\n"
+            f"{error_body}"
+        )
+        conn.sendall(response.encode("utf-8"))
+        print("[SERVER] Sent 400 Bad Request.")
+        semaphore.release()
+        conn.close()
+
+    def start(self):
+        # server configuration
+        HOST = self.host
+        PORT = self.port
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind((HOST, PORT))
+
+        # starting server
+        self.running = True
+        self.server.listen()
+
+        while self.running:
+            ready_to_read, _, _ = select.select([self.server], [], [], 1.0)
+            if ready_to_read:
+                try:
+                    conn, addr = self.server.accept()
+                except OSError:
+                    break
+                self.semaphore.acquire()
+                handler = multiprocessing.Process(target=self.handle, args=(conn, self.cpf_db, self.cnpj_db, self.semaphore))
+                handler.start()
+                conn.close()
+            else:
+                continue
+
+    def stop(self):
+        self.running = False
+        if self.server:
+            self.server.close()

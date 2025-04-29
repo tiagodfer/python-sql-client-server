@@ -78,6 +78,7 @@ def get_person_by_cpf(cpf):
                 'nasc': row[3]
             }
             cpf_list.append(cpf_info)
+            print(cpf_list)
         return jsonify({'results': cpf_list}), 200
     else:
         return jsonify({'error': 'CPF não encontrado'}), 404
@@ -158,6 +159,13 @@ def get_person_cnpj_by_cpf_radical(name, cpf):
         return jsonify({'results': cpf_list}), 200
     else:
         return jsonify({'error': 'Não é sócio de nenhuma empresa'}), 404
+
+@app.after_request
+def after_request(response):
+    print("Status:", response.status)
+    print("Headers:", response.headers)
+    print("Response data:", response.get_data(as_text=True))
+    return response
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

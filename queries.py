@@ -2,7 +2,8 @@ import sqlite3
 import json
 
 def search_cpf_by_exact_name(name, cursor):
-    cursor.execute("SELECT * FROM cpf WHERE nome = ?", (name,))
+    name = name.upper()
+    cursor.execute("SELECT * FROM cpf WHERE nome = ? COLLATE NOCASE", (name,))
     result = cursor.fetchall()
     json_result = []
     for row in result:
@@ -13,10 +14,10 @@ def search_cpf_by_exact_name(name, cursor):
             'nasc': row[3]
             }
         json_result.append(json_dict)
-    json_result = json.dumps(json_result)
     return json_result
 
 def search_cpf_by_name(name, cursor):
+    name = name.upper()
     cursor.execute("SELECT * FROM cpf WHERE nome LIKE ?", ('%' + name + '%',))
     result = cursor.fetchall()
     json_result = []
@@ -28,7 +29,6 @@ def search_cpf_by_name(name, cursor):
             'nasc': row[3]
             }
         json_result.append(json_dict)
-    json_result = json.dumps(json_result)
     return json_result
 
 def search_cpf_by_cpf(cpf, cursor):
@@ -43,7 +43,6 @@ def search_cpf_by_cpf(cpf, cursor):
             'nasc': row[3]
             }
         json_result.append(json_dict)
-    json_result = json.dumps(json_result)
     return json_result
 
 def check_person_cnpj(name, cursor):
@@ -58,7 +57,6 @@ def check_person_cnpj(name, cursor):
             'nasc': row[7],
             }
         json_result.append(json_dict)
-    json_result = json.dumps(json_result)
     return json_result
 
 def check_person_cnpj_and_cpf(name_and_cpf, cursor):
@@ -76,5 +74,4 @@ def check_person_cnpj_and_cpf(name_and_cpf, cursor):
             'nome': row[2],
             }
         json_result.append(json_dict)
-    json_result = json.dumps(json_result)
     return json_result
