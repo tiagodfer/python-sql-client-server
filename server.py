@@ -19,6 +19,17 @@ class Server():
         self.semaphore = semaphore
 
     @staticmethod
+    def get_local_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('8.8.8.8', 80))
+            return s.getsockname()[0]
+        except Exception:
+            return '127.0.0.1'
+        finally:
+            s.close()
+
+    @staticmethod
     def send_http_json(conn, data):
         body = json.dumps(data)
         response = (
@@ -29,7 +40,6 @@ class Server():
             f"{body}"
         )
         conn.sendall(response.encode("utf-8"))
-        print(response.encode("utf-8"))
 
     @staticmethod
     def handle(conn, cpf_db, cnpj_db, semaphore):
@@ -42,39 +52,29 @@ class Server():
 
             data = conn.recv(1024)
             request = data.decode()
-            print(f"[SERVER] Received request: {request!r}")
 
             # /get-person-by-name/
             match = re.match(r"GET /get-person-by-name/([^ ]+) HTTP/1.[01]", request)
             if match:
                 name = urllib.parse.unquote_plus(match.group(1))
-                print(f"[SERVER] Parsed name: {name}")
                 result = queries.search_cpf_by_name(name, cursor_cpf)
-                print(result)
                 Server.send_http_json(conn, {"results": result})
-                print("[SERVER] Sent HTTP JSON response.")
                 return
 
             # /get-person-by-exact-name/
             match = re.match(r"GET /get-person-by-exact-name/([^ ]+) HTTP/1.[01]", request)
             if match:
                 name = urllib.parse.unquote_plus(match.group(1))
-                print(f"[SERVER] Parsed exact name: {name}")
                 result = queries.search_cpf_by_exact_name(name, cursor_cpf)
-                print(result)
                 Server.send_http_json(conn, {"results": result})
-                print("[SERVER] Sent HTTP JSON response.")
                 return
 
             # /get-person-by-cpf/
             match = re.match(r"GET /get-person-by-cpf/(\d+) HTTP/1.[01]", request)
             if match:
                 cpf = match.group(1)
-                print(f"[SERVER] Parsed CPF: {cpf}")
                 result = queries.search_cpf_by_cpf(cpf, cursor_cpf)
-                print(result)
                 Server.send_http_json(conn, {"results": result})
-                print("[SERVER] Sent HTTP JSON response.")
                 return
 
             # Invalid request
@@ -87,12 +87,7 @@ class Server():
                 f"{error_body}"
             )
             conn.sendall(response.encode("utf-8"))
-            print("[SERVER] Sent 400 Bad Request.")
-
-        except Exception as e:
-            print(f"[SERVER] Exception in handle: {e}")
         finally:
-            # Always release the semaphore and close resources
             semaphore.release()
             conn.close()
             try:
@@ -111,6 +106,9 @@ class Server():
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((HOST, PORT))
+
+        local_ip = self.get_local_ip()
+        print(f"[SERVER] Listening on {local_ip}:{PORT}")
 
         # starting server
         self.running = True
