@@ -6,6 +6,7 @@ import multiprocessing
 import re
 import select
 import urllib.parse
+import ssl
 
 class Server():
     def __init__(self, host, port, cpf_db, cnpj_db, semaphore):
@@ -103,12 +104,22 @@ class Server():
         # server configuration
         HOST = self.host
         PORT = self.port
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind((HOST, PORT))
+
+        # Create SSL context
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
+
+        # Create and bind socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((HOST, PORT))
+        sock.listen()
+
+        # Wrap socket with SSL
+        self.server = context.wrap_socket(sock, server_side=True)
 
         local_ip = self.get_local_ip()
-        print(f"[SERVER] Listening on {local_ip}:{PORT}")
+        print(f"[SERVER] Listening on {local_ip}:{PORT} (HTTPS)")
 
         # starting server
         self.running = True
