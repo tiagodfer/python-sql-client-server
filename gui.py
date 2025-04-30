@@ -123,7 +123,7 @@ class Window(QtWidgets.QWidget):
         self.manager = Manager()
         self.semaphore = self.manager.BoundedSemaphore(threads)
         self.server = server.Server(
-            host = "127.0.0.1",
+            host = "0.0.0.0",
             port = int(port),
             cpf_db = self.cpf_db,
             cnpj_db = self.cnpj_db,
