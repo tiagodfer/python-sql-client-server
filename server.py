@@ -4,11 +4,11 @@ import queries
 import socket
 import multiprocessing
 import re
-import select
 import urllib.parse
+import os
 
 class Server():
-    def __init__(self, host, port, cpf_db, cnpj_db, semaphore):
+    def __init__(self, host, port, cpf_db, cnpj_db, pool):
         super().__init__()
         self.host = host
         self.port = port
@@ -16,7 +16,18 @@ class Server():
         self.cnpj_db = cnpj_db
         self.server = None
         self.running = False
-        self.semaphore = semaphore
+        self.pool = pool
+
+    @staticmethod
+    def get_local_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(('8.8.8.8', 80))
+            return s.getsockname()[0]
+        except Exception:
+            return '127.0.0.1'
+        finally:
+            s.close()
 
     @staticmethod
     def send_http_json(conn, data):
@@ -29,10 +40,10 @@ class Server():
             f"{body}"
         )
         conn.sendall(response.encode("utf-8"))
-        print(response.encode("utf-8"))
 
     @staticmethod
-    def handle(conn, cpf_db, cnpj_db, semaphore):
+    def handle(conn, cpf_db, cnpj_db):
+        print(f"[SERVER] Handler process started with PID: {os.getpid()}")
         try:
             # Open database connections
             conn_cpf = sqlite3.connect(cpf_db)
@@ -42,39 +53,36 @@ class Server():
 
             data = conn.recv(1024)
             request = data.decode()
-            print(f"[SERVER] Received request: {request!r}")
+            #print(f"[SERVER] Received request: {request!r}")
 
             # /get-person-by-name/
             match = re.match(r"GET /get-person-by-name/([^ ]+) HTTP/1.[01]", request)
             if match:
                 name = urllib.parse.unquote_plus(match.group(1))
-                print(f"[SERVER] Parsed name: {name}")
+                #print(f"[SERVER] Parsed name: {name}")
                 result = queries.search_cpf_by_name(name, cursor_cpf)
-                print(result)
                 Server.send_http_json(conn, {"results": result})
-                print("[SERVER] Sent HTTP JSON response.")
+                #print("[SERVER] Sent HTTP JSON response.")
                 return
 
             # /get-person-by-exact-name/
             match = re.match(r"GET /get-person-by-exact-name/([^ ]+) HTTP/1.[01]", request)
             if match:
                 name = urllib.parse.unquote_plus(match.group(1))
-                print(f"[SERVER] Parsed exact name: {name}")
+                #print(f"[SERVER] Parsed exact name: {name}")
                 result = queries.search_cpf_by_exact_name(name, cursor_cpf)
-                print(result)
                 Server.send_http_json(conn, {"results": result})
-                print("[SERVER] Sent HTTP JSON response.")
+                #print("[SERVER] Sent HTTP JSON response.")
                 return
 
             # /get-person-by-cpf/
             match = re.match(r"GET /get-person-by-cpf/(\d+) HTTP/1.[01]", request)
             if match:
                 cpf = match.group(1)
-                print(f"[SERVER] Parsed CPF: {cpf}")
+                #print(f"[SERVER] Parsed CPF: {cpf}")
                 result = queries.search_cpf_by_cpf(cpf, cursor_cpf)
-                print(result)
                 Server.send_http_json(conn, {"results": result})
-                print("[SERVER] Sent HTTP JSON response.")
+                #print("[SERVER] Sent HTTP JSON response.")
                 return
 
             # Invalid request
@@ -87,13 +95,8 @@ class Server():
                 f"{error_body}"
             )
             conn.sendall(response.encode("utf-8"))
-            print("[SERVER] Sent 400 Bad Request.")
-
-        except Exception as e:
-            print(f"[SERVER] Exception in handle: {e}")
+            #print("[SERVER] Sent 400 Bad Request.")
         finally:
-            # Always release the semaphore and close resources
-            semaphore.release()
             conn.close()
             try:
                 conn_cpf.close()
@@ -112,23 +115,22 @@ class Server():
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((HOST, PORT))
 
+        local_ip = self.get_local_ip()
+        print(f"[SERVER] Listening on {local_ip}:{PORT}")
+
         # starting server
         self.running = True
         self.server.listen()
 
         while self.running:
-            ready_to_read, _, _ = select.select([self.server], [], [], 1.0)
-            if ready_to_read:
                 try:
                     conn, addr = self.server.accept()
+                    self.pool.apply_async(
+                        self.handle,
+                        (conn, self.cpf_db, self.cnpj_db)
+                    )
                 except OSError:
                     break
-                self.semaphore.acquire()
-                handler = multiprocessing.Process(target=self.handle, args=(conn, self.cpf_db, self.cnpj_db, self.semaphore))
-                handler.start()
-                conn.close()
-            else:
-                continue
 
     def stop(self):
         self.running = False
