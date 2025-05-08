@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 import server
 from multiprocessing import Manager
+import multiprocessing
 
 class ServerThread(QtCore.QThread):
     def __init__(self, server):
@@ -36,11 +37,12 @@ class Window(QtWidgets.QWidget):
         self.threads_field = QtWidgets.QSpinBox()
         self.threads_field.setMinimum(1)
         self.threads_field.setMaximum(64)
-        self.threads_field.setValue(4)
+        default_threads = multiprocessing.cpu_count()
+        self.threads_field.setValue(default_threads)
         self.threads_field.setPrefix("Threads: ")
 
         # Port field
-        self.port_field = QtWidgets.QLineEdit()
+        self.port_field = QtWidgets.QLineEdit('5000')
         self.port_field.setPlaceholderText("Port")
 
         # Start/Stop and Close Buttons

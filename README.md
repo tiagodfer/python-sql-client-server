@@ -58,8 +58,33 @@ python server.py
 
 - `server.py`: Aplicativo principal do servidor com GUI
 - `queries.py`: Funções de consulta ao banco de dados
+- `random_cpf_generator.py`: Utilitário para gerar listas aleatórias de CPFs e nomes do banco de dados
 - `requirements.txt`: Dependências do projeto
 - `README.md`: Documentação do projeto
+
+### Utilitário de Geração de CPFs Aleatórios
+
+O arquivo `random_cpf_generator.py` é uma ferramenta de linha de comando para gerar listas de CPFs e nomes aleatórios a partir do banco de dados. Use-o assim:
+
+```bash
+# Gera 10 CPFs aleatórios (padrão)
+python random_cpf_generator.py
+
+# Gera um número específico de CPFs (exemplo: 20)
+python random_cpf_generator.py -q 20
+
+# Salva os resultados em dois arquivos CSV separados (para CPFs e nomes)
+python random_cpf_generator.py -q 50 -o lista_resultados
+
+# O comando acima vai gerar dois arquivos:
+# - lista_resultados_cpfs.csv (contendo CPFs separados por vírgula)
+# - lista_resultados_names.csv (contendo nomes separados por vírgula na mesma ordem dos CPFs)
+
+# Usa um caminho de banco de dados personalizado
+python random_cpf_generator.py -d caminho/para/banco.db
+```
+
+Os resultados são formatados como valores separados por vírgula (CSV), gerados em dois arquivos distintos, mantendo a mesma ordem de registros em ambos os arquivos.
 
 ## Nota
 
