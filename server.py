@@ -8,6 +8,8 @@ import select
 import urllib.parse
 import ssl
 import traceback
+import time
+from datetime import datetime, timedelta
 
 class Server():
     def __init__(self, host, port, cpf_db, cnpj_db, semaphore):
@@ -19,6 +21,8 @@ class Server():
         self.server = None
         self.running = False
         self.semaphore = semaphore
+        self.start_time = None
+        self.stop_time = None
 
     @staticmethod
     def get_local_ip():
@@ -270,6 +274,11 @@ class Server():
             print(f"Connection with {addr} closed")
 
     def start(self):
+        # Registrar o tempo de início
+        self.start_time = time.time()
+        start_datetime = datetime.fromtimestamp(self.start_time)
+        print(f"[SERVER] Starting at: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+        
         # Server configuration
         HOST = self.host
         PORT = self.port
@@ -329,8 +338,33 @@ class Server():
         except Exception as e:
             print(f"Error setting up server: {e}")
             traceback.print_exc()
+            # Registrar tempo de parada mesmo em caso de erro
+            self.stop_time = time.time()
+            self._log_execution_time()
 
     def stop(self):
         self.running = False
         if self.server:
             self.server.close()
+        
+        # Registrar o tempo de parada
+        self.stop_time = time.time()
+        stop_datetime = datetime.fromtimestamp(self.stop_time)
+        print(f"[SERVER] Stopped at: {stop_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # Calcular e exibir o tempo total de execução
+        self._log_execution_time()
+    
+    def _log_execution_time(self):
+        """Calcula e exibe o tempo total de execução do servidor."""
+        if self.start_time and self.stop_time:
+            execution_time = self.stop_time - self.start_time
+            hours, remainder = divmod(execution_time, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            
+            duration = timedelta(seconds=execution_time)
+            
+            print(f"[SERVER] Total execution time: {int(hours)}h {int(minutes)}m {int(seconds)}s ({execution_time:.2f} seconds)")
+            print(f"[SERVER] Server was active for: {duration}")
+        else:
+            print("[SERVER] Execution time could not be calculated (missing start or stop time)")
